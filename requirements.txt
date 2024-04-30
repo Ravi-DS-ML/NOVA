@@ -1,0 +1,11 @@
+streamlit
+pandas
+requests
+tensorflow
+scikit-learn
+numpy
+matplotlib
+seaborn
+google-generativeai
+PyPDF2
+pillow
