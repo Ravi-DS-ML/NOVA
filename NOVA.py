@@ -48,116 +48,7 @@ class AskImageBot:
 # ask_image_bot.run()
 
 
-from tensorflow.keras.models import load_model
-import pickle
-import tensorflow as tf 
-import numpy as np 
-import pandas as pd 
-import json 
-from tensorflow import keras 
-from keras.preprocessing.text import Tokenizer
-import string
-from keras.preprocessing.sequence import pad_sequences
-from sklearn.preprocessing import LabelEncoder
-import random
-def get_data(prediction_input):
-    with open('./intents.json') as content:
-        data = json.load(content)
 
-    tags = []
-    inputs = []
-    responses_bots = {}
-
-    for intent in data['intents']:
-        responses_bots[intent['intent']] = intent['responses']
-        for lines in intent['text']:
-            inputs.append(lines)
-            tags.append(intent['intent'])
-
-    data = pd.DataFrame({'inputs':inputs, 'tags':tags})
-
-    
-    data['inputs'] = data['inputs'].apply(lambda wrd:[ltrs.lower() for ltrs in wrd if ltrs not in string.punctuation])
-    data['inputs'] = data['inputs'].apply(lambda wrd: ''.join(wrd))
-
-    
-    tokenizer = Tokenizer(num_words=2000)
-    tokenizer.fit_on_texts(data['inputs'])
-    train = tokenizer.texts_to_sequences(data['inputs'])
-
-    
-    X_train = pad_sequences(train)
-
-    
-    le = LabelEncoder()
-    y_train = le.fit_transform(data['tags'])
-
-    input_shape = X_train.shape[1]
-
-
-    texts_p = []
-    model = tf.keras.models.load_model('./model.h5')
-
-        # removing Punctuations
-    prediction_input = [ltrs.lower() for ltrs in prediction_input if ltrs not in string.punctuation]
-    prediction_input = ''.join(prediction_input)
-    texts_p.append(prediction_input)
-
-        # tokenizing and padding
-    prediction_input = tokenizer.texts_to_sequences(texts_p)
-    prediction_input = np.array(prediction_input).reshape(-1)
-    prediction_input = pad_sequences([prediction_input],input_shape)
-
-        #getting output from model
-    output = model.predict(prediction_input)
-    output = output.argmax()
-
-        #finding the right tag and predicting
-    response_tag = le.inverse_transform([output])[0]
-
-    return random.choice(responses_bots[response_tag])
-
-
-
-class ChatBot:
-    def __init__(self):
-        self.model = None
-        self.tokenizer = None
-        if 'conversation_history' not in st.session_state:
-            st.session_state.conversation_history = []
-
-    def load_model_and_tokenizer(self, model_path, tokenizer_path):
-        self.model = load_model(model_path)
-        self.tokenizer = pickle.load(open(tokenizer_path, 'rb'))
-
-    def get_user_input(self):
-        return st.text_input('User')
-
-    def get_bot_response(self, user_input):
-        bot_data = get_data(user_input)
-        st.session_state.conversation_history.append({'user': user_input, 'bot': bot_data})
-
-    def display_conversation_history(self):
-        for item in reversed(st.session_state.conversation_history):
-            col1, col2 = st.columns(2)
-            with col2:
-                st.markdown(f"**User:** {item['user']}")
-            with col1:
-                st.divider()
-                st.markdown(f"**Bot:** {item['bot']}")
-
-    def run(self, model_path, tokenizer_path):
-        st.title('Custom ChatBot')
-        self.load_model_and_tokenizer(model_path, tokenizer_path)
-        user_input = self.get_user_input()
-        submit = st.button('Submit')
-        if submit and user_input:
-            self.get_bot_response(user_input)
-        self.display_conversation_history()
-
-# Instantiate and run the bot
-# chat_bot = ChatBot()
-# chat_bot.run('model.h5', 'tokenizer.pkl')
 
 
 class VisionBot:
@@ -532,7 +423,7 @@ health_bot = HealthBot()
 # fun_bot = FunBot()
 resume_parser_bot = ResumeParserBot()
 vision_bot = VisionBot()
-chat_bot = ChatBot()  # Create an instance of the ChatBot class
+# chat_bot = ChatBot()  # Create an instance of the ChatBot class
 ask_image_bot = AskImageBot()
 # Function to hide/show bot sections based on selection
 def show_hide_bots(selected_bot):
@@ -562,14 +453,14 @@ def show_hide_bots(selected_bot):
         vision_bot.run()
     elif selected_bot == "Ask About Image":
         ask_image_bot.run()
-    elif selected_bot == "Chat Bot":  # Add this block for Chat Bot
-        chat_bot.run('model.h5', 'tokenizer.pkl')
+    # elif selected_bot == "Chat Bot":  # Add this block for Chat Bot
+    #     chat_bot.run('model.h5', 'tokenizer.pkl')
 
 # Sidebar with API key input
 api_key = st.sidebar.text_input("Enter the API Key")
 
 # Radio button to choose the bot
-selected_bot = st.sidebar.radio("Choose a Bot", ('Home',"Recipe Bot", "Weight Loss Assistant Bot", "QA Bot", "Health Bot",'Ask About Image' ,"Resume Parser Bot", "Vision Bot", "Chat Bot"))  # Add "Chat Bot" option
+selected_bot = st.sidebar.radio("Choose a Bot", ('Home',"Recipe Bot", "Weight Loss Assistant Bot", "QA Bot", "Health Bot",'Ask About Image' ,"Resume Parser Bot", "Vision Bot"))  # Add "Chat Bot" option
 
 # Set API key for all bot instances if provided
 if not api_key:
